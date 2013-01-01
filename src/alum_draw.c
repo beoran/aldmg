@@ -13,7 +13,7 @@ the original image. Pass a nonpositive number to have the corner sizes automatic
 new_w and new_h are the new dimensions the new image should have.
 This is useful for GUI backgrounds.
 */
-void image_blitscale9(Image * img, int xx, int yy,
+void alum_image_blitscale9(Image * img, int xx, int yy,
                                   int new_w, int new_h,
                                   int corner_w, int corner_h) {
 
@@ -73,24 +73,24 @@ void image_blitscale9(Image * img, int xx, int yy,
 
 
 /*** Draws a filled rectange at the given position with the given size */
-void draw_slab(int x, int y, int w, int h, Color col) {
+void alum_draw_slab(int x, int y, int w, int h, Color col) {
   al_draw_filled_rectangle(x, y, x+w, y+h, col);
 } 
 
 /*** Draws a rounded filled rectange at the given position with the given size */
-void draw_roundslab(int x, int y, int w, int h, int rx, int ry, Color col) {
+void alum_draw_roundslab(int x, int y, int w, int h, int rx, int ry, Color col) {
   al_draw_filled_rounded_rectangle(x, y, x+w, y+h, rx, ry, col);
 } 
 
 
 /*** Draws an open rectange at the given position with the given size */
-void draw_box(int x, int y, int w, int h, Color col, int tt) {
+void alum_draw_box(int x, int y, int w, int h, Color col, int tt) {
   al_draw_rectangle(x, y, x+w, y+h, col, tt);
 } 
 
 
 /** Draws a rounded rectangle at the given position with the given size */
-void draw_roundbox(int x, int y, int w, int h, int rx, int ry, Color col, int tt) {
+void alum_draw_roundbox(int x, int y, int w, int h, int rx, int ry, Color col, int tt) {
   al_draw_rounded_rectangle(x, y, x+w, y+h, rx, ry, col, tt);
 } 
   
@@ -98,7 +98,7 @@ void draw_roundbox(int x, int y, int w, int h, int rx, int ry, Color col, int tt
 /** Draws a filled frame of the given thickness on the active bitmap.
 * The outer size of the frame will be ww and hh.
 * border color is fg, background color is bg. */
-void draw_frame(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
+void alum_draw_frame(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
   // Draw inner frame in bg color.
   draw_slab(xx, yy, ww, hh, bg);
   // Draw outer frame in fg color with the given thickness.
@@ -109,7 +109,7 @@ void draw_frame(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
 * The rounding is autocalulated. The outer size of the frame will be ww and hh.
 * border color is fg, background color is bg.
 */
-void draw_roundframe(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
+void alum_draw_roundframe(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
   int rx = 4;
   int ry = 4;
   // draw inner frame in bg color.

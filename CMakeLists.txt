@@ -38,23 +38,28 @@ add_library(ALUM_OBJECTS OBJECT ${ALUM_SRC_FILES})
 add_executable(alum $<TARGET_OBJECTS:ALUM_OBJECTS> src/main.c)
 target_link_libraries(alum ${ALUM_LIBS})
 
-
-# Naturaldocs 
-add_custom_target(alum_docs Name [ALL] [command1 [args1...]]
-                    [COMMAND command2 [args2...] ...]
-                    [DEPENDS depend depend depend ... ]
-                    [WORKING_DIRECTORY dir]
-                    [COMMENT comment] [VERBATIM]
-                    [SOURCES src1 [src2...]])
-
 set(ALUM_REFMAN_INDEX  ${CMAKE_CURRENT_SOURCE_DIR}/doc/refman/index.html)
 set(ALUM_REFMAN  ${CMAKE_CURRENT_SOURCE_DIR}/doc/refman)
 set(ALUM_PROJECT ${CMAKE_CURRENT_SOURCE_DIR}/doc/nd)
 set(ALUM_ND_IN   ${CMAKE_CURRENT_SOURCE_DIR})
 set(ALUM_ND /opt/naturaldocs/NaturalDocs)
 
-add_custom_command(
-    OUTPUT ${ALUM_REFMAN_INDEX}
-    COMMAND ${ALUM_ND} -i ${ALUM_ND_IN} -p ${ALUM_ND_IN} -o HTML ${ALUM_REFMAN}
+add_custom_target(docs
+    ${ALUM_ND} -i ${ALUM_ND_IN} -p ${ALUM_ND_IN} -o HTML ${ALUM_REFMAN}
     DEPENDS ${ALUM_SRC_FILES}
+    SOURCES ${ALUM_SRC_FILES}
+    VERBATIM
   )
+
+# output  ${ALUM_REFMAN_INDEX}
+# Naturaldocs 
+# add_custom_target(alum_docs ${ALUM_ND})
+
+#  [args1...]]
+#                     [COMMAND command2 [args2...] ...]
+#                     [DEPENDS depend depend depend ... ]
+#                     [WORKING_DIRECTORY dir]
+#                     [COMMENT comment] [VERBATIM]
+#                     [SOURCES src1 [src2...]]
+
+

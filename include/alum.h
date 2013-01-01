@@ -7,23 +7,7 @@
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
-/* Const: FALSE.
-* Of course we define our own boolean value for FALSE.
-*/
-#ifndef FALSE 
-#define FALSE 0
-#endif 
-
-/* Const: TRUE.
-* Of course we define our own boolean value for TRUE.
-*/
-#ifndef TRUE 
-#define TRUE (!FALSE)
-#endif 
+#include "bad.h"
 
 /* 
 * Typedef: AlumBitmap
@@ -38,18 +22,29 @@
 * Typedef: AlumColor
 * A shorthand for ALLEGRO_COLOR
 */
-#define AlumBitmap  ALLEGRO_BITMAP
-#define AlumFont    ALLEGRO_FONT
-#define AlumString  ALLEGRO_USTR
-#define AlumColor   ALLEGRO_COLOR
+#define AlumBitmap      ALLEGRO_BITMAP
+#define AlumFont        ALLEGRO_FONT
+#define AlumString      ALLEGRO_USTR
+#define AlumStringInfo  ALLEGRO_USTR_INFO
+#define AlumColor       ALLEGRO_COLOR
 
 
 /* Forward typedefs. */
 typedef struct Alum_          Alum;
 typedef struct AlumStyle_     AlumStyle;
+
+typedef struct AlumListener_  AlumListener;
+typedef struct AlumSender_    AlumSender;
+
 typedef struct AlumWidget_    AlumWidget;
+
 typedef struct AlumActions_   AlumActions;
+
 typedef enum   AlumFlags_     AlumFlags;
+typedef enum   AlumMessage_   AlumMessage;
+typedef enum   AlumReply_     AlumReply;
+
+
 
 
 /*
@@ -113,19 +108,9 @@ only read.
 #define ALUM_FOCUSED_P(WIDGET, FLAG)    ALUM_FLAG_P(WIDGET, ALUM_FOCUSED)
 #define ALUM_SELECTED_P(WIDGET, FLAG)   ALUM_FLAG_P(WIDGET, ALUM_SELECTED)
 
-/* Enum: AlumReply: the reply of an Action. */
-enum AlumReply { 
-  ALUM_REPLY_ERROR     = -1,
-  ALUM_REPLY_IGNORE    =  1,
-  ALUM_REPLY_OK        =  2,
-  ALUM_REPLY_CLOSE     =  3,
-  ALUM_REPLY_REDRAW    =  4,
-  ALUM_REPLY_REDRAWME  =  5,
-  ALUM_REPLY_ASKFOCUS  =  6,
-};
-
 /** A message sent to a Widget. */
-enum AlumMessage {
+enum AlumMessage_ {
+  ALUM_MESSAGE_ALL          = 0,
   ALUM_MESSAGE_INIT         = 1,
   ALUM_MESSAGE_DONE         = 2,
   ALUM_MESSAGE_DRAW         = 3,
@@ -143,25 +128,71 @@ enum AlumMessage {
   ALUM_MESSAGE_IDLE         = 15,
   ALUM_MESSAGE_RADIO        = 16,
   ALUM_MESSAGE_WHEEL        = 17,
+  ALUM_MESSAGE_REGISTER     = 19,
+  ALUM_MESSAGE_UNREGISTER   = 20,
+  
   ALUM_MESSAGE_USER         = 24,
   ALUM_MESSAGE_MAX          = 32,
 };
 
+/* Enum: AlumReply: the reply of to a message sent. */
+enum AlumReply_ { 
+  ALUM_REPLY_ERROR     = -1,
+  ALUM_REPLY_IGNORE    =  1,
+  ALUM_REPLY_OK        =  2,
+  ALUM_REPLY_CLOSE     =  3,
+  ALUM_REPLY_REDRAW    =  4,
+  ALUM_REPLY_REDRAWME  =  5,
+  ALUM_REPLY_ASKFOCUS  =  6,
+};
 
-/** Message data sent to a widget. */
-typedef struct AlumMessageData_ {
-  ALLEGRO_EVENT * event;
-  double          dt;
-} AlumMessageData;
 
-/** Action to take on receiving a message
+/* Type: AlumMessenger.
+* AlumMessenger is a function type that is used to send 
+* variable messenges from a sender to a receiver.
 */
-typedef int AlumAction(AlumWidget * self, int message, va_list args);
+typedef int AlumMessenger(void * sender, void * receiver,
+                            int message  , va_list args);
 
 
-/** Widget method table */
+/* Type: AlumListen.
+* AlumListen is a function type that is used to send 
+* messenges from an AlumSender to an AlumListener.
+*/
+typedef int AlumListen(AlumSender * sender, AlumListener * listener, 
+                       int message, va_list args);
+
+/* Struct: AlumListener
+* An AlumListener can be registered with one and only one AlumSender,
+* but a sender can have several AlumListeners registered.
+* To have the same struct listen to several AlumSenders, you'll need 
+* several listeners, however these could have the same listen function.
+* You may not modify the fields of this struct that start with _ manually,
+* these are for the internal use of the AlumSender and the AlumListener,
+* though you may read them to iterate to the next AlumListener for that sender.
+* Rationale: the current design avoids the need for dynamic memory allocation.
+*/
+struct AlumListener_ {
+  AlumMessenger   * listen;
+  int               last_result;
+  /* The following are private and for use of the AlumSender. */
+  BadList           list;
+};
+
+
+/* typedef struct AlumSenderNode_ AlumSenderNode; */
+
+/* Struct: AlumSender
+* A Sender sends messages to all listeners that are registered with it.
+*/
+struct AlumSender_ {
+  /** A chain (doubly linked list) of AlumListeners. */
+  BadList * chain;
+};
+
+/** Widget messenger table. */
 struct AlumActions_ {
-  AlumAction * acts[ALUM_MESSAGE_MAX];
+  AlumMessenger * messengers[ALUM_MESSAGE_MAX];
 };
 
 
@@ -176,21 +207,32 @@ are NOT cleaned up, since style is intended to be mostly a shallow copy in which
 font and background image are repeated many times.
 */
 struct AlumWidget_ {
-  /* Methods           */
-  AlumActions   * acts;
   /* Bounds, this is a rectangular box. */
   AlumBox         bounds;
   /* Styling elements. */
   AlumStyle       style;
+    
+  /** Doubly list of widgets, in drawing order. */
+  BadList         list;
+  
+  /* Methods           */
+  AlumActions   * acts;
+  
+  /* Sender to connect to to get events from this widget. */
+  AlumSender      sender;
+  
+  
   /* Widget elements: */
   /* Unique ID. */
   int id;
   /* Flags (active, disabled, etc) */
   int flags;
-  /* Priority of widget */
+  /* Priority of widget, useful for sorting. */
   int z;
-  /* Index of widget in parent UI manager. */
-  int index;
+  
+  
+  
+  
 };
 
 
@@ -203,9 +245,57 @@ struct Alum_ {
   AlumWidget * joy_on;
   int click_wait;
   int amount;
-  AlumWidget **widgets;
+  /* Chain of doubly linked widgets, bottom-first. */
+  BadList    * chain;
+  /* Last, topmost widget in chain. */
+  BadList    * top;
+  /* array of senders to register to to receive respective messages. */
+  AlumSender    senders[ALUM_MESSAGE_MAX];
+  
 };
 
+
+typedef struct AlumConsole_ AlumConsole;
+
+
+
+AlumListener * 
+alumlistener_init(AlumListener * listener, AlumMessenger * listen);
+
+AlumListener * 
+alumlistener_done(AlumListener * listener);
+
+int 
+alum_sendva(AlumSender * send, AlumListener * listener,
+            int message, va_list args);
+
+int 
+alum_send(AlumSender * sender, AlumListener * listener, int message, ...);
+
+AlumSender * 
+alumsender_init(AlumSender * self);
+
+AlumSender * 
+alumsender_register(AlumSender * self, AlumListener * listener);
+
+
+AlumSender * 
+alumsender_unregister_node(AlumSender * self, AlumListener * listener);
+
+
+AlumSender * 
+alumsender_unregister(AlumSender * self, AlumListener * listener);
+
+AlumSender * alumsender_done(AlumSender * self);
+
+int
+alum_broadcastva(AlumSender * self, int message, va_list args);
+
+int
+alum_broadcast(AlumSender * self, int message, ...);
+
+AlumSender * 
+alumsender_link(AlumSender * self, AlumListener * listener, AlumMessenger * listen);
 
 
 
