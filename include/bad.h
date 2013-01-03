@@ -7,10 +7,10 @@
 * and algorithms in it, under a permissive license.
 * OK, BAD may be a bad name, but I hope you find the contents not too bad. :)
 *
-* One charactersistic of Inli is that it's data structures are normally 
-* intrusive, that is they must be included in the struct that you want to put 
-* inside the given data structure. Also, normally the data structures are 
-* doubly linked for fast iteration in any direction.
+* One charactersistic of Bad is that it's data structures are normally 
+* intrusive, that is they must be included in the struct that you want
+* to put inside the given data structure. Also, normally the data
+* structures are doubly linked for fast iteration in any direction.
 * 
 * License: bad.h and bad.c are 
 *
@@ -38,8 +38,6 @@
 
 #ifndef BAD_H_INCLUDED
 #define BAD_H_INCLUDED
-
-#include "bad.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -224,6 +222,8 @@ BadAatree * badaatree_delete(BadAatree * self, BadAatree * node,
                              BadAatreeSetValue * set);
 
 
+typedef struct BadVariant_ BadVariant;
+typedef struct BadVariantList_ BadVariantList;
 
 
 

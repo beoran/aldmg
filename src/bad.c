@@ -651,3 +651,177 @@ void badaatree_printgraph(BadAatree * self, int level) {
 }
 
 
+/* Playing with a boxed C pointer. Avoids double frees or unintentional reuse.
+*/
+struct BadBoxptr_ {
+  void * ptr_private;  
+};
+
+
+struct BadBoxptr_ badboxptr_make(void * ptr) {
+  struct BadBoxptr_ self = {ptr};
+  return self;
+}
+
+struct BadBoxptr_ badboxptr_malloc(size_t size) {
+  return badboxptr_make(malloc(size));
+}
+
+void * badboxptr_get(struct BadBoxptr_ * self) {
+  return self->ptr_private;
+} 
+
+
+struct BadBoxptr_ * 
+badboxptr_realloc(struct BadBoxptr_ * self, size_t size) {
+  void * old = self->ptr_private;
+  void * aid = realloc(old, size);
+  if(aid) { self->ptr_private = aid; }
+  return self;
+}
+
+void
+badboxptr_free(struct BadBoxptr_ * self) {
+  free(self->ptr_private);
+  self->ptr_private = NULL;
+}
+
+/* Another more simple approach, but you cannot forget o use 
+ * bad_xfree(&pointer), then...
+ */
+void bad_xfree(void ** ptrptr) {
+  if(!ptrptr) return;
+  free(*ptrptr);
+  (*ptrptr) = NULL;
+}
+
+void* bad_xrealloc(void ** ptrptr, size_t size) {
+  void*aid;
+  if(!ptrptr) return NULL;
+  aid = realloc(*ptrptr,size);
+  if(aid) {
+    (*ptrptr) = aid;
+  }
+  return aid;
+}
+
+
+typedef void BadFunction(void);
+typedef BadFunction * BadFunctionPtr;
+
+
+
+union BadVariantUnion_ {
+  void        * ptr;
+  BadFunction * fptr;
+  char        * cstr;
+  int           i;
+  double        d;
+};
+
+enum BadVariantEnum_ {
+  BADVARIANT_NONE   = 0,
+  BADVARIANT_PTR    = 1,
+  BADVARIANT_FPTR   = 2,
+  BADVARIANT_CSTR   = 3,
+  BADVARIANT_INT    = 4,
+  BADVARIANT_DOUBLE = 5,
+};  
+ 
+
+struct BadVariant_ {
+  enum  BadVariantEnum_  type;
+  union BadVariantUnion_ value;
+};
+
+
+struct BadVariant_ badvariant_fromint(int value) {
+  struct BadVariant_ result;
+  result.type    = BADVARIANT_INT;
+  result.value.i = value;
+  return result;
+}
+
+struct BadVariant_ badvariant_fromdouble(double value) {
+  struct BadVariant_ result;
+  result.type      = BADVARIANT_DOUBLE;
+  result.value.d   = value;
+  return result;
+}
+
+struct BadVariant_ badvariant_fromptr(void * value) {
+  struct BadVariant_ result;
+  result.type      = BADVARIANT_PTR;
+  result.value.ptr = value;
+  return result;
+}
+
+
+struct BadVariant_ badvariant_fromcstr(char * value) {
+  struct BadVariant_ result;
+  result.type      = BADVARIANT_PTR;
+  result.value.ptr = value;
+  return result;
+}
+
+struct BadVariant_ badvariant_fromfptr(BadFunction * value) {
+  struct BadVariant_ result;
+  result.type      = BADVARIANT_FPTR;
+  result.value.fptr= value;
+  return result;
+}
+
+
+struct BadVariantList_ {
+  struct BadVariant_ var;
+  struct BadList_    list;
+};
+
+struct BadVariantList_ *
+badvariantlist_init(struct BadVariantList_ * self, struct BadVariant_ var) {
+  self->var = var;
+  badlist_init(&self->list);
+  return self;
+}  
+
+BadVariantList *
+badvariantlist_initva(BadVariantList * self, char * format, va_list args) {
+  if((!self) || (!format))  { return NULL; } 
+  for( ; (*format) ; format++) {
+    
+    
+  }
+  return self;
+}
+
+BadVariantList *
+badvariantlist_initf(BadVariantList * self, char * format, ...) {
+  BadVariantList * result;
+  va_list args;
+  va_start(args, format);
+  result = badvariantlist_initva(self, format, args);
+  va_end(args);
+  return result;  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

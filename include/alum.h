@@ -152,7 +152,7 @@ enum AlumReply_ {
 * variable messenges from a sender to a receiver.
 */
 typedef int AlumMessenger(void * sender, void * receiver,
-                            int message  , va_list args);
+                            int message, va_list args);
 
 
 /* Type: AlumListen.
@@ -160,7 +160,7 @@ typedef int AlumMessenger(void * sender, void * receiver,
 * messenges from an AlumSender to an AlumListener.
 */
 typedef int AlumListen(AlumSender * sender, AlumListener * listener, 
-                       int message, va_list args);
+                        int message, va_list args);
 
 /* Struct: AlumListener
 * An AlumListener can be registered with one and only one AlumSender,
@@ -212,7 +212,7 @@ struct AlumWidget_ {
   /* Styling elements. */
   AlumStyle       style;
     
-  /** Doubly list of widgets, in drawing order. */
+  /* Doubly list of widgets, in drawing order. */
   BadList         list;
   
   /* Methods           */
@@ -295,7 +295,8 @@ int
 alum_broadcast(AlumSender * self, int message, ...);
 
 AlumSender * 
-alumsender_link(AlumSender * self, AlumListener * listener, AlumMessenger * listen);
+alumsender_link(AlumSender * self, AlumListener * listener, 
+                AlumMessenger * listen);
 
 
 
