@@ -222,10 +222,59 @@ BadAatree * badaatree_delete(BadAatree * self, BadAatree * node,
                              BadAatreeSetValue * set);
 
 
-typedef struct BadVariant_ BadVariant;
-typedef struct BadVariantList_ BadVariantList;
+typedef struct BadVar_     BadVar;
+typedef struct BadVarList_ BadVarList;
+
+typedef void BadFunction(void);
+typedef BadFunction * BadFunctionPtr;
 
 
+
+union BadVarUnion_ {
+  void        * ptr;
+  BadFunction * fptr;
+  char        * cstr;
+  int           i;
+  double        d;
+};
+
+enum BadVarEnum_ {
+  BADVAR_NONE   =  0 ,
+  BADVAR_PTR    = 'p',
+  BADVAR_FPTR   = 'P',
+  BADVAR_CSTR   = 's',
+  BADVAR_INT    = 'i',
+  BADVAR_DOUBLE = 'f',
+};  
+ 
+
+struct BadVar_ {
+  enum  BadVarEnum_  type;
+  union BadVarUnion_ value;
+};
+
+
+struct BadVar_ badvar_makeint(int value);
+struct BadVar_ badvar_makedouble(double value);
+struct BadVar_ badvar_makeptr(void * value);
+struct BadVar_ badvar_makecstr(char * value);
+struct BadVar_ badvar_makefptr(BadFunction * value);
+
+void * badvar_ptr(BadVar self);
+BadFunction * badvar_fptr(BadVar self);
+char * badvar_cstr(BadVar self);
+int badvar_int(BadVar self);
+double badvar_double(BadVar self);
+
+void badvar_store(BadVar * self, void * ptr);
+BadVar * badvar_load(BadVar * self, int type, void * ptr) ;
+BadVar badvar_make(int type, void * valptr) ;
+
+int badvar_toarrayva(int argc, BadVar argv[], char * fmt, va_list args) ;
+int badvar_toarraylen(int argc, BadVar argv[], char * fmt, ...);
+int badvar_toarray(BadVar argv[], char * fmt, ...);
+int badvar_fromarrayva(BadVar argv[], int argc, va_list args);
+int badvar_fromarray(BadVar argv[], int argc, ...);
 
 
 #endif /* BAD_H_INCLUDED */

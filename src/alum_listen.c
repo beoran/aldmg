@@ -147,9 +147,9 @@ alum_broadcastva(AlumSender * self, int message, va_list args) {
   for (aid = self->chain; aid ; aid = badlist_next(aid)) {
     AlumListener * listener;
     va_list args_copy;
-    memcpy(&args_copy, &args, sizeof(va_list));
+    va_copy(args_copy, args);
     listener = bad_container(aid, AlumListener, list);
-    int result = alum_sendva(self, listener, message, args);
+    int result = alum_sendva(self, listener, message, args_copy);
     listener->last_result = result;
   }
   return 0;

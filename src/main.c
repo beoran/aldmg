@@ -58,7 +58,7 @@ typedef struct TryAatree_ TryAatree;
 struct TryAatree_ {
   int value;
   BadAatree tree;
-};
+}; 
 
 void tryaatree_print(TryAatree * self) {
   printf("TryAatree: %p %d \n", self, self->value);

@@ -267,7 +267,7 @@ alumlistener_done(AlumListener * listener);
 
 int 
 alum_sendva(AlumSender * send, AlumListener * listener,
-            int message, va_list args);
+            int message, int BadVar argv[]);
 
 int 
 alum_send(AlumSender * sender, AlumListener * listener, int message, ...);

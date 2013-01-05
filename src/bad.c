@@ -1,3 +1,4 @@
+#include <string.h>
 #include "bad.h"
 
 /*
@@ -706,86 +707,214 @@ void* bad_xrealloc(void ** ptrptr, size_t size) {
 }
 
 
-typedef void BadFunction(void);
-typedef BadFunction * BadFunctionPtr;
 
 
-
-union BadVariantUnion_ {
-  void        * ptr;
-  BadFunction * fptr;
-  char        * cstr;
-  int           i;
-  double        d;
-};
-
-enum BadVariantEnum_ {
-  BADVARIANT_NONE   = 0,
-  BADVARIANT_PTR    = 1,
-  BADVARIANT_FPTR   = 2,
-  BADVARIANT_CSTR   = 3,
-  BADVARIANT_INT    = 4,
-  BADVARIANT_DOUBLE = 5,
-};  
- 
-
-struct BadVariant_ {
-  enum  BadVariantEnum_  type;
-  union BadVariantUnion_ value;
-};
-
-
-struct BadVariant_ badvariant_fromint(int value) {
-  struct BadVariant_ result;
-  result.type    = BADVARIANT_INT;
+struct BadVar_ badvar_makeint(int value) {
+  struct BadVar_ result;
+  result.type    = BADVAR_INT;
   result.value.i = value;
   return result;
 }
 
-struct BadVariant_ badvariant_fromdouble(double value) {
-  struct BadVariant_ result;
-  result.type      = BADVARIANT_DOUBLE;
+struct BadVar_ badvar_makedouble(double value) {
+  struct BadVar_ result;
+  result.type      = BADVAR_DOUBLE;
   result.value.d   = value;
   return result;
 }
 
-struct BadVariant_ badvariant_fromptr(void * value) {
-  struct BadVariant_ result;
-  result.type      = BADVARIANT_PTR;
+struct BadVar_ badvar_makeptr(void * value) {
+  struct BadVar_ result;
+  result.type      = BADVAR_PTR;
   result.value.ptr = value;
   return result;
 }
 
 
-struct BadVariant_ badvariant_fromcstr(char * value) {
-  struct BadVariant_ result;
-  result.type      = BADVARIANT_PTR;
+struct BadVar_ badvar_makecstr(char * value) {
+  struct BadVar_ result;
+  result.type      = BADVAR_PTR;
   result.value.ptr = value;
   return result;
 }
 
-struct BadVariant_ badvariant_fromfptr(BadFunction * value) {
-  struct BadVariant_ result;
-  result.type      = BADVARIANT_FPTR;
+struct BadVar_ badvar_makefptr(BadFunction * value) {
+  struct BadVar_ result;
+  result.type      = BADVAR_FPTR;
   result.value.fptr= value;
   return result;
 }
 
+void * badvar_ptr(BadVar self) {
+  if (self.type != BADVAR_PTR) return NULL;
+  return self.value.ptr;
+}
 
-struct BadVariantList_ {
-  struct BadVariant_ var;
+BadFunction * badvar_fptr(BadVar self) {
+  if (self.type != BADVAR_FPTR) return NULL;
+  return self.value.fptr;
+}
+
+char * badvar_cstr(BadVar self) {
+  if (self.type != BADVAR_CSTR) return NULL;
+  return self.value.cstr;
+}
+
+int badvar_int(BadVar self) {
+  if (self.type != BADVAR_INT) return 0;
+  return self.value.i;
+}
+
+double badvar_double(BadVar self) {
+  if (self.type != BADVAR_DOUBLE) return 0.0;
+  return self.value.d;
+}
+
+
+void badvar_store(BadVar * self, void * ptr) {
+  switch(self->type) { 
+    case BADVAR_PTR   : (*((void **)ptr))        = self->value.ptr;
+    break;
+    case BADVAR_FPTR  : (*((BadFunction **)ptr)) = self->value.fptr;
+    break; 
+    case BADVAR_CSTR  : (*((char**)ptr))         = self->value.cstr;
+    break; 
+    case BADVAR_INT   : (*((int*)ptr))           = self->value.i;
+    break;
+    case BADVAR_DOUBLE: (*((double*)ptr))        = self->value.d;
+    break;
+    default: 
+    break;
+  }
+}
+
+BadVar * badvar_load(BadVar * self, int type, void * ptr) {
+  self->type = type;
+  switch(self->type) { 
+    case BADVAR_PTR   : self->value.ptr  = ptr;
+    break;
+    case BADVAR_FPTR  : self->value.fptr = (BadFunction*) ptr;
+    break; 
+    case BADVAR_CSTR  : self->value.cstr = (char*) ptr;
+    break; 
+    case BADVAR_INT   : self->value.i    = (*((int *)ptr));
+    break;
+    case BADVAR_DOUBLE: self->value.d    = (*((double*)ptr));
+    break;
+    default: 
+    break;
+  }
+  return self;
+}
+
+BadVar badvar_make(int type, void * valptr) {
+  BadVar self;
+  badvar_load(&self, type, valptr);
+  return self;
+}
+
+
+int badvar_toarrayva(int argc, BadVar argv[], char * fmt, va_list args) {
+  int index;
+  for (index = 0; index < argc; index ++) {
+    BadVar * var = argv + index;
+    int type = (int) fmt[index];
+    if (type == 0) return index;
+    switch(type) { 
+      case BADVAR_PTR : 
+        argv[index] = badvar_makeptr(va_arg(args, void *)); 
+      break;
+      case BADVAR_FPTR  : 
+        argv[index] = badvar_makefptr(va_arg(args, BadFunction *)); 
+      break;
+      case BADVAR_CSTR  : 
+        argv[index] = badvar_makecstr(va_arg(args, char *)); 
+      break;
+      case BADVAR_INT   : 
+        argv[index] = badvar_makeint(va_arg(args, int)); 
+      break; 
+      case BADVAR_DOUBLE: 
+        argv[index] = badvar_makedouble(va_arg(args, double)); 
+      break;
+      default: 
+      break;
+    }
+  }
+  return index;
+}
+
+int badvar_toarraylen(int argc, BadVar argv[], char * fmt, ...) {
+  va_list args;
+  int result;
+  va_start(args, fmt);
+  result = badvar_toarrayva(argc, argv, fmt, args);
+  va_end(args);
+  return result;
+}
+
+int badvar_toarray(BadVar argv[], char * fmt, ...) {
+  va_list args;
+  int argc; 
+  int result;
+  argc = strlen(fmt);
+  va_start(args, fmt);
+  result = badvar_toarrayva(argc, argv, fmt, args);
+  va_end(args);
+  return result;
+}
+
+
+int badvar_fromarrayva(BadVar argv[], int argc, va_list args) {
+  int index;
+  for (index = 0; index < argc; index ++) {
+    BadVar * var = argv + index;
+    switch(var->type) { 
+      case BADVAR_PTR : 
+        (*va_arg(args, void **)) = badvar_ptr(argv[index]);
+      break;
+      case BADVAR_FPTR  : 
+        (*va_arg(args, BadFunction **)) = badvar_fptr(argv[index]);
+      break;
+      case BADVAR_CSTR  : 
+        (*va_arg(args, char **)) = badvar_cstr(argv[index]);
+      break;
+      case BADVAR_INT   : 
+        (*va_arg(args, int *)) = badvar_int(argv[index]);
+      break; 
+      case BADVAR_DOUBLE: 
+        (*va_arg(args, double *)) = badvar_double(argv[index]);
+      break;
+      default: 
+      break;
+    }
+  }
+  return index;
+}
+
+int badvar_fromarray(BadVar argv[], int argc, ...) {
+  va_list args;
+  int result;
+  va_start(args, argc);
+  result = badvar_fromarrayva(argv, argc, args);
+  va_end(args);
+  return result;
+}
+
+/** This may not be very useful since it's hard to define. */
+struct BadVarList_ {
+  struct BadVar_ var;
   struct BadList_    list;
 };
 
-struct BadVariantList_ *
-badvariantlist_init(struct BadVariantList_ * self, struct BadVariant_ var) {
+struct BadVarList_ *
+badvarlist_init(struct BadVarList_ * self, struct BadVar_ var) {
   self->var = var;
   badlist_init(&self->list);
   return self;
 }  
 
-BadVariantList *
-badvariantlist_initva(BadVariantList * self, char * format, va_list args) {
+BadVarList *
+badvarlist_initva(BadVarList * self, char * format, va_list args) {
   if((!self) || (!format))  { return NULL; } 
   for( ; (*format) ; format++) {
     
@@ -794,12 +923,12 @@ badvariantlist_initva(BadVariantList * self, char * format, va_list args) {
   return self;
 }
 
-BadVariantList *
-badvariantlist_initf(BadVariantList * self, char * format, ...) {
-  BadVariantList * result;
+BadVarList *
+badvarlist_initf(BadVarList * self, char * format, ...) {
+  BadVarList * result;
   va_list args;
   va_start(args, format);
-  result = badvariantlist_initva(self, format, args);
+  result = badvarlist_initva(self, format, args);
   va_end(args);
   return result;  
 }
