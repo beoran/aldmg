@@ -112,6 +112,7 @@ int main(void) {
   assert(listener2.state == 0);
   printf("Broadcast\n");
   alum_broadcast(&sender.sender, 123, 7, 8);
+  printf("BadVar: %d, %d, %d\n", sizeof(BadVar), sizeof(int), sizeof(double));
   printf("States: %d, %d", listener1.state, listener2.state);
   root = NULL;
   for( index = 0; index < 64; index ++) {
