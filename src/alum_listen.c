@@ -7,7 +7,7 @@
 * Initializes an AlumListener
 */
 AlumListener * 
-alumlistener_init(AlumListener * listener, AlumMessenger * listen) {
+alumlistener_init(AlumListener * listener, AlumReact * listen) {
   listener->listen      = listen;
   badlist_init(&listener->list);
   return listener;
@@ -24,29 +24,16 @@ alumlistener_done(AlumListener * listener) {
   return listener;
 }
 
-
-/* Function: alum_sendva
-* Sends a message to the listener from the given sender
-*/
-int 
-alum_sendva(AlumSender * sender, AlumListener * listener, 
-            int message, va_list args) {
-  if((!listener) && (!listener->listen)) return ALUM_REPLY_ERROR;
-  return listener->listen(sender, listener, message, args);
-}
-
-
 /* Function: alum_send
 * Sends a message to the listener from the given sender
 */
 int 
 alum_send(AlumSender * sender, AlumListener * listener, 
-          int message, ...) {
+          int message, void * data) {
   int result;
   va_list args;
-  va_start(args, message);
-  result = alum_sendva(sender, listener, message, args);
-  va_end(args);
+  if((!listener) && (!listener->listen)) return ALUM_REPLY_ERROR;
+  return listener->listen(sender, listener, message, data);
   return result;
 }
 
@@ -135,38 +122,22 @@ AlumSender * alumsender_done(AlumSender * self) {
 };
 
 
-/* Function: alum_broadcastva
-* Broadcast a message from the given sender to all it's 
-* registered listeners that are interested in that message.
-*/
-int
-alum_broadcastva(AlumSender * self, int message, va_list args) {
-  BadList * base, * aid;
-  if (!self) return ALUM_REPLY_ERROR;
-  base  = self->chain;
-  for (aid = self->chain; aid ; aid = badlist_next(aid)) {
-    AlumListener * listener;
-    va_list args_copy;
-    va_copy(args_copy, args);
-    listener = bad_container(aid, AlumListener, list);
-    int result = alum_sendva(self, listener, message, args_copy);
-    listener->last_result = result;
-  }
-  return 0;
-};
-
-
 /* Function: alum_broadcast
 * Broadcast a message from the given sender to all it's 
 * registered listeners that are interested in that message.
 */
 int
-alum_broadcast(AlumSender * self, int message, ...) {
-  int result;
+alum_broadcast(AlumSender * self, int message, void * data) {
+  int result = 0;
   va_list args;
-  va_start(args, message);
-  result = alum_broadcastva(self, message, args);
-  va_end(args);
+  BadList * base, * aid;
+  if (!self) return ALUM_REPLY_ERROR;
+  base  = self->chain;
+  for (aid = self->chain; aid ; aid = badlist_next(aid)) {
+    AlumListener * listener = bad_container(aid, AlumListener, list);
+    int result = alum_send(self, listener, message, data);
+    listener->last_result = result;
+  } 
   return result;
 }
 
@@ -177,8 +148,38 @@ alum_broadcast(AlumSender * self, int message, ...) {
 */
 AlumSender * 
 alumsender_link(AlumSender * self, AlumListener * listener, 
-                AlumMessenger * listen) {
+                AlumReact * listen) {
   alumlistener_init(listener, listen);
   return alumsender_register(self, listener);
 }
+
+
+int 
+alumactions_register(AlumActions * self, int message, AlumReact * reaction) {
+  if (message < 0) return message;
+  if(message >= ALUM_MESSAGE_MAX) {
+    return -message;
+  }
+  self->reactions[message] = reaction;
+  return message;
+}
+
+int 
+alumactions_act(AlumActions * self, void * from, void * to, 
+                int message, void * data) {
+  if (message < 0) return ALUM_REPLY_ERROR;
+  if(message >= ALUM_MESSAGE_MAX) {
+    message = ALUM_MESSAGE_OTHER;   
+  }
+  if(!self->reactions[message]) {
+    return ALUM_REPLY_IGNORE;
+  }
+  return self->reactions[message](from, to, message, data);
+}
+
+
+int alumwidget_act(AlumWidget * self, void * from, int message, void * data) {
+  return alumactions_act(self->acts, from, self, message, data);   
+} 
+
 
