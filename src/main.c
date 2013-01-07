@@ -37,18 +37,10 @@ typedef struct TryListener_ TryListener;
 
 /* A test listener function. */
 int trylistener_onstate(void * sender, void * listener, 
-                         int message, va_list args) {
+                         int message, void * data) {
   struct TryListener_ *container;
   container         = bad_container(listener, TryListener, listener);
-  if(message == ALUM_MESSAGE_REGISTER) {
-    printf("%p registered\n", listener);
-    return ALUM_REPLY_OK;
-  }
-  if(message == ALUM_MESSAGE_UNREGISTER) {
-    printf("%p unregistered\n", listener);
-    return ALUM_REPLY_OK;
-  }
-  container->state  = va_arg(args, int);
+  container->state  = *((int *)(data));
   printf("Broadcast %p %d %d\n", listener, message, container->state);
   return ALUM_REPLY_OK;
 }
@@ -101,7 +93,8 @@ int main(void) {
   BadAatree             * root, * newroot;
   BadAatree             * aataid;
   TryAatree             * taid;
-  int index;
+  int                     index;
+  int                     argi = 7;
   ALLEGRO_DISPLAY       * display;
   ALLEGRO_EVENT_QUEUE   * queue;
   srand(time(NULL));
@@ -111,7 +104,7 @@ int main(void) {
   assert(listener1.state == 0);
   assert(listener2.state == 0);
   printf("Broadcast\n");
-  alum_broadcast(&sender.sender, 123, 7, 8);
+  alum_broadcast(&sender.sender, 123, &argi);
   printf("States: %d, %d", listener1.state, listener2.state);
   root = NULL;
   for( index = 0; index < 64; index ++) {

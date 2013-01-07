@@ -1,3 +1,39 @@
+#include "alum.h"
+
+typedef struct AlumFrame_ AlumFrame;
+
+struct AlumFrame_ {
+  AlumWidget widget;
+};
+
+int alumframe_initactions(AlumActions * actions, AlumActions * parent) {
+  return -1;
+}
+
+int alumframe_draw(void * from, void * to, int message, void * data) {
+  AlumWidget * widget = (AlumWidget *) to;
+  alum_draw_roundframe(widget->bounds, widget->style.bordersize,
+                       widget->style.forecolor,
+                       widget->style.backcolor);
+  return ALUM_REPLY_OK;
+}
+
+typedef struct AlumLabel_ AlumLabel;
+
+struct AlumLabel_ {
+  AlumFrame frame;
+  char    * text;
+};
+
+int alumlabel_draw(void * from, void * to, int message, void * data) {
+  AlumWidget * widget = (AlumWidget *) to;
+  AlumFrame  * frame  = bad_container(widget, AlumFrame, widget);
+  AlumLabel  * label  = bad_container(frame , AlumLabel, frame);
+  alumframe_draw(label, widget, ALUM_MESSAGE_DRAW, data);
+}
+
+
+
 
 #ifdef _COMMENT
 

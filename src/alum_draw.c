@@ -1,10 +1,10 @@
 
-#include "draw.h"
+#include "alum.h"
 
 /* Additional drawing functions and wrappers for primitive drawing 
 functionality. */
 
-
+#ifdef COMMENT_
 /** Draws an image on the current target bitmap according to a 9 part scaling
 algorithm. This splits the bitmap in 9 parts, keeps the 4 corners unscaled, but
 scales the 4 edges and the center according to the desired size.
@@ -71,51 +71,61 @@ void alum_image_blitscale9(Image * img, int xx, int yy,
   image_drawpart(img, part_w, src_y, corner_h, corner_w, right_x, dst_y,  0);
 }
 
+#endif
 
-/*** Draws a filled rectange at the given position with the given size */
-void alum_draw_slab(int x, int y, int w, int h, Color col) {
-  al_draw_filled_rectangle(x, y, x+w, y+h, col);
+/*** Draws a filled rectangle at the given position with the given size */
+void alum_draw_slab(AlumBox box, AlumColor col) {
+  al_draw_filled_rectangle
+  (box.at.x, box.at.y, box.at.x+box.size.x, box.at.y+box.size.y, col);
 } 
 
-/*** Draws a rounded filled rectange at the given position with the given size */
-void alum_draw_roundslab(int x, int y, int w, int h, int rx, int ry, Color col) {
-  al_draw_filled_rounded_rectangle(x, y, x+w, y+h, rx, ry, col);
+/*** Draws a rounded filled rectange at the given position with the given size
+*/
+void alum_draw_roundslab(AlumBox box, int rx, int ry, AlumColor col) {
+  al_draw_filled_rounded_rectangle
+  (box.at.x, box.at.y, box.at.x+box.size.x, box.at.y+box.size.y, rx, ry, col);
+
 } 
 
 
-/*** Draws an open rectange at the given position with the given size */
-void alum_draw_box(int x, int y, int w, int h, Color col, int tt) {
-  al_draw_rectangle(x, y, x+w, y+h, col, tt);
+/*** Draws an open rectangle at the given position with the given size */
+void alum_draw_box(AlumBox box, AlumColor col, int tt) {
+  al_draw_rectangle
+  (box.at.x, box.at.y, box.at.x+box.size.x, box.at.y+box.size.y, col, tt);
 } 
 
 
 /** Draws a rounded rectangle at the given position with the given size */
-void alum_draw_roundbox(int x, int y, int w, int h, int rx, int ry, Color col, int tt) {
-  al_draw_rounded_rectangle(x, y, x+w, y+h, rx, ry, col, tt);
-} 
-  
+void alum_draw_roundbox(AlumBox box, int rx, int ry, AlumColor
+col, int tt) {
+  al_draw_rounded_rectangle
+  (box.at.x, box.at.y, box.at.x+box.size.x, box.at.y+box.size.y, 
+   rx, ry, col, tt);
+}
 
 /** Draws a filled frame of the given thickness on the active bitmap.
 * The outer size of the frame will be ww and hh.
 * border color is fg, background color is bg. */
-void alum_draw_frame(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
+void alum_draw_frame(AlumBox box, int tt, AlumColor fg, AlumColor bg)  {
   // Draw inner frame in bg color.
-  draw_slab(xx, yy, ww, hh, bg);
+  alum_draw_slab(box, bg);
   // Draw outer frame in fg color with the given thickness.
-  draw_box(xx, yy, ww, hh, fg, tt);
+  alum_draw_box(box, fg, tt);
 }  
   
 /** Draws a filled, rounded frame of the given thickness on the active bitmap.
 * The rounding is autocalulated. The outer size of the frame will be ww and hh.
 * border color is fg, background color is bg.
 */
-void alum_draw_roundframe(int xx, int yy, int ww, int hh, int tt, Color fg, Color bg)  {
+void alum_draw_roundframe(AlumBox box, int tt, AlumColor fg, AlumColor bg)  {
   int rx = 4;
   int ry = 4;
   // draw inner frame in bg color.
-  draw_roundslab(xx, yy, ww, hh, rx, ry, bg);
+  alum_draw_roundslab(box, rx, ry, bg);
   // draw outer frame in fg color with the given thickness.
-  draw_roundbox(xx, yy, ww, hh, rx, ry, fg, tt);
+  alum_draw_roundbox(box, rx, ry, fg, tt);
 }
+
+
 
 

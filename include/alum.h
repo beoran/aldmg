@@ -75,11 +75,12 @@ struct AlumStyle_ {
   AlumColor     backcolor;
   AlumFont    * font;
   AlumBitmap  * background;
+  int           bordersize;
 };
 
 
 
-/* Enum: AlumFlags. 
+/* Enum: AlumFlags_. 
 * Flags for a widget. A widget can be : visible or not
 * listening to input not (if it  invisble and not listening 
 * input it's inactive, otherwise active) 
@@ -87,7 +88,7 @@ struct AlumStyle_ {
 * but normally ignores it, focus accepts input).
 * Selected is for checkboxes that are selected or buttons that are down, etc.
 */
-enum AlumFlags {
+enum AlumFlags_ {
   ALUM_VISIBLE    = 1,
   ALUM_LISTENING  = 2,
   ALUM_ACTIVE     = 3,
@@ -108,8 +109,9 @@ only read.
 #define ALUM_FOCUSED_P(WIDGET, FLAG)    ALUM_FLAG_P(WIDGET, ALUM_FOCUSED)
 #define ALUM_SELECTED_P(WIDGET, FLAG)   ALUM_FLAG_P(WIDGET, ALUM_SELECTED)
 
-/** A message sent to a Widget. */
-enum AlumMessage_ {
+/* Enum: AlumMessageType_ 
+ * A type of message sent to a Widget. */
+enum AlumMessageType_ {
   ALUM_MESSAGE_ALL          = 0,
   ALUM_MESSAGE_INIT         = 1,
   ALUM_MESSAGE_DONE         = 2,
@@ -132,10 +134,11 @@ enum AlumMessage_ {
   ALUM_MESSAGE_UNREGISTER   = 20,
   
   ALUM_MESSAGE_USER         = 24,
+  ALUM_MESSAGE_OTHER        = 31,
   ALUM_MESSAGE_MAX          = 32,
 };
 
-/* Enum: AlumReply: the reply of to a message sent. */
+/* Enum: AlumReply_: the reply of to a message sent. */
 enum AlumReply_ { 
   ALUM_REPLY_ERROR     = -1,
   ALUM_REPLY_IGNORE    =  1,
@@ -147,20 +150,21 @@ enum AlumReply_ {
 };
 
 
-/* Type: AlumMessenger.
-* AlumMessenger is a function type that is used to send 
-* variable messenges from a sender to a receiver.
+/* Type: AlumReact.
+* AlumReact is a function type that is used to handle  
+* messages sent from a sender to a receiver.
 */
-typedef int AlumMessenger(void * sender, void * receiver,
-                            int message, va_list args);
+typedef 
+int AlumReact(void * sender, void * receiver, int message, void * data);
 
 
 /* Type: AlumListen.
 * AlumListen is a function type that is used to send 
 * messenges from an AlumSender to an AlumListener.
 */
-typedef int AlumListen(AlumSender * sender, AlumListener * listener, 
-                        int message, va_list args);
+typedef 
+int AlumListen(AlumSender * sender, AlumListener * listener, 
+               int message, void * data);
 
 /* Struct: AlumListener
 * An AlumListener can be registered with one and only one AlumSender,
@@ -173,7 +177,7 @@ typedef int AlumListen(AlumSender * sender, AlumListener * listener,
 * Rationale: the current design avoids the need for dynamic memory allocation.
 */
 struct AlumListener_ {
-  AlumMessenger   * listen;
+  AlumReact       * listen;
   int               last_result;
   /* The following are private and for use of the AlumSender. */
   BadList           list;
@@ -186,25 +190,34 @@ struct AlumListener_ {
 * A Sender sends messages to all listeners that are registered with it.
 */
 struct AlumSender_ {
-  /** A chain (doubly linked list) of AlumListeners. */
+  /* A chain (doubly linked list) of AlumListener_ . */
   BadList * chain;
 };
 
-/** Widget messenger table. */
+/* Widget messenger table. */
 struct AlumActions_ {
-  AlumMessenger * messengers[ALUM_MESSAGE_MAX];
+  AlumReact * reactions[ALUM_MESSAGE_MAX];
 };
 
 
 /* 
+Struct: AlumWidget
 
 Widgets are individual parts of the UI.  
 As a simplification, Widgets are considered to occupy "panes" ordered 
-in the user interface from back to front. Buttons may seem to be owned by the underlying dialog window, but in fact they are not.
+in the user interface from back to front. Buttons may seem to be owned by the 
+underlying dialog window, but in fact they are not.
 
 A note on pointer ownership: the pointers to font and image in style
 are NOT cleaned up, since style is intended to be mostly a shallow copy in which
 font and background image are repeated many times.
+
+
+Widgets in an Alum UI are expected to be set up before the 
+UI is displayed, and after that the UIs is best kept statical. To enable this,
+most Widgets can be set to non-active to hide and disable interaction
+with them.
+
 */
 struct AlumWidget_ {
   /* Bounds, this is a rectangular box. */
@@ -212,7 +225,7 @@ struct AlumWidget_ {
   /* Styling elements. */
   AlumStyle       style;
     
-  /* Doubly list of widgets, in drawing order. */
+  /* Doubly linked list of widgets, in drawing order. */
   BadList         list;
   
   /* Methods           */
@@ -228,15 +241,11 @@ struct AlumWidget_ {
   /* Flags (active, disabled, etc) */
   int flags;
   /* Priority of widget, useful for sorting. */
-  int z;
-  
-  
-  
-  
+  int z; 
 };
 
 
-/** Struct: Alum
+/* Struct: Alum.
 * The core UI Manager.
 */
 struct Alum_ {
@@ -251,26 +260,48 @@ struct Alum_ {
   BadList    * top;
   /* array of senders to register to to receive respective messages. */
   AlumSender    senders[ALUM_MESSAGE_MAX];
-  
 };
 
 
 typedef struct AlumConsole_ AlumConsole;
 
+/* Draws a filled rectangle at the given position with the given size. */
+void alum_draw_slab(AlumBox box, AlumColor col);
+
+/* Draws a rounded filled rectange at the given position with the given size. */
+void alum_draw_roundslab(AlumBox box, int rx, int ry, AlumColor col);
+
+/* Draws an open rectangle at the given position with the given size */
+void alum_draw_box(AlumBox box, AlumColor col, int tt);
+
+/* Draws a rounded rectangle at the given position with the given size */
+void alum_draw_roundbox(AlumBox box, int rx, int ry, AlumColor col, int tt);
+/* Draws a filled frame of the given thickness on the active bitmap.
+* The outer size of the frame will be ww and hh.
+* border color is fg, background color is bg. */
+void alum_draw_frame(AlumBox box, int tt, AlumColor fg, AlumColor bg);
+
+/* Draws a filled, rounded frame of the given thickness on the active bitmap.
+* The rounding is auto calculated. The outer size of the frame will be 
+* ww and hh.
+* border color is fg, background color is bg.
+*/
+void alum_draw_roundframe(AlumBox box, int tt, AlumColor fg, AlumColor bg);
 
 
 AlumListener * 
-alumlistener_init(AlumListener * listener, AlumMessenger * listen);
+alumlistener_init(AlumListener * listener, AlumReact * react);
 
 AlumListener * 
 alumlistener_done(AlumListener * listener);
 
 int 
 alum_sendva(AlumSender * send, AlumListener * listener,
-            int message, int BadVar argv[]);
+            int message, va_list args);
 
 int 
-alum_send(AlumSender * sender, AlumListener * listener, int message, ...);
+alum_send(AlumSender * sender, AlumListener * listener, 
+          int message, void * data);
 
 AlumSender * 
 alumsender_init(AlumSender * self);
@@ -292,11 +323,11 @@ int
 alum_broadcastva(AlumSender * self, int message, va_list args);
 
 int
-alum_broadcast(AlumSender * self, int message, ...);
+alum_broadcast(AlumSender * self, int message, void * data);
 
 AlumSender * 
 alumsender_link(AlumSender * self, AlumListener * listener, 
-                AlumMessenger * listen);
+                AlumReact * react);
 
 
 
