@@ -9,6 +9,46 @@
 
 #include "bad.h"
 
+/*
+How to do the event handling? 
+1) 
+Idea: Listeners. In essence, the UI maintains lists for every kind of event
+of all widgets that are interested in that event. 
+Pro: Faster. Less set up work than bubbling. 
+Con: Need to connect listeners. Uses more memory. More difficult for a widget 
+that wants to listen only /sometimes/. 
+
+2) 
+Idea: Classic bubbling. In essence, the widgets have table/array/tree 
+of events they support and the UI sends the events to all widgets
+in some predefined order (bubbling). If a widget accepts the event
+and "swallows" it , the UI doesn't send the event to widgets after the 
+accepting widget, otherwise the event passes over the whole list.
+Pro: Less space needed. No need to connect listeners. Widgets can 
+handle events flexibly. 
+Con: Harder to set up depending on internal structure of supported events.
+
+3)
+Allegro 4 dialog style. Like bubbling, but every widget only has one event
+handling function pointer that gets passed all events. It uses a big switch then
+to decide how to handle the event.
+Pro: Least space used, conceptually simple. 
+Con: Lots of repeated and possibly redundant big switches in the widget code.
+
+4) 
+Idea: Many specific function pointers. Like bubbling of Allegro 4,
+but in stead of only one function pointer, there are several, each 
+specific for every kind of event, but they are not in a table,
+but simply named straightforwardly. 
+Pro: Only one or two big switches needed. Should be decently fast, conceptually
+quite simple.
+Con: Uses a bit of space for the function pointers. Need a switch to 
+dynamically look up the correct function pointer for an event.
+
+5) Idea: Composition. How to do this? 
+*/
+
+
 /* 
 * Typedef: AlumBitmap
 * A shorthand for ALLEGRO_BITMAP
@@ -30,20 +70,22 @@
 
 
 /* Forward typedefs. */
-typedef struct Alum_          Alum;
-typedef struct AlumStyle_     AlumStyle;
+typedef struct Alum_                   Alum;
+typedef struct AlumStyle_              AlumStyle;
+typedef struct AlumListener_           AlumListener;
+typedef struct AlumSender_             AlumSender;
+typedef struct AlumWidget_             AlumWidget;
+typedef struct AlumActions_            AlumActions;
+typedef enum   AlumFlags_              AlumFlags;
+typedef enum   AlumMessageType_        AlumMessageType;
+typedef enum   AlumReply_              AlumReply;
 
-typedef struct AlumListener_  AlumListener;
-typedef struct AlumSender_    AlumSender;
-
-typedef struct AlumWidget_    AlumWidget;
-
-typedef struct AlumActions_   AlumActions;
-
-typedef enum   AlumFlags_     AlumFlags;
-typedef enum   AlumMessage_   AlumMessage;
-typedef enum   AlumReply_     AlumReply;
-
+typedef struct AlumBasicMessage_       AlumBasicMessage;
+typedef struct AlumDisplayMessage_     AlumDisplayMessage;
+typedef struct AlumJoystickMessage_    AlumJoystickMessage;
+typedef struct AlumKeyboardMessage_    AlumKeyboardMessage;
+typedef struct AlumMouseMessage_       AlumMouseMessage;
+typedef struct AlumTimerMessage_       AlumTimerMessage;
 
 
 
@@ -67,7 +109,7 @@ typedef struct AlumBox_ {
 } AlumBox;
 
 
-/* Struct: AlumStyle. 
+/* Struct: AlumStyle 
 * Describes the style of a widget.
 */
 struct AlumStyle_ {
@@ -98,7 +140,7 @@ enum AlumFlags_ {
 
 /* Flag testing macros. */
 
-/** Checks if flag is set.
+/* Checks if flag is set.
 Flag will be evaluated 2 times so must be a constant or a variable that is 
 only read. 
 */
@@ -200,8 +242,58 @@ struct AlumActions_ {
 };
 
 
+/* Messages that Alum may send to the widgets.  */
+struct AlumBasicMessage_ { 
+  int    type;
+  void  *source;
+  double timestamp;
+};
+
+struct AlumDisplayMessage_ { 
+  struct AlumBasicMessage_ basic;
+  int x, y;
+  int width, height;
+  int orientation;
+};
+
+struct AlumJoystickMessage_ { 
+  struct AlumBasicMessage_ basic;
+  void * joystick;
+  int    stick;
+  int    axis;
+  float  pos;
+  int    button;
+};
+
+struct AlumKeyboardMessage_ { 
+  struct AlumBasicMessage_ basic;
+  void        * display; 
+  int           keycode;                 
+  int           unichar;                 
+  unsigned int  modifiers;     
+  int           repeat;                 
+};
+
+struct AlumMouseMessage_ {
+  struct AlumBasicMessage_ basic;
+  void  * display;
+  int x,  y,  z, w;
+  int dx, dy, dz, dw;
+  unsigned int button;
+  float pressure;
+};
+
+
+struct AlumTimerMessage_ {
+  struct AlumBasicMessage_ basic;
+  int64_t count;
+  double error;
+};
+
+
+
 /* 
-Struct: AlumWidget
+Struct: AlumWidget-
 
 Widgets are individual parts of the UI.  
 As a simplification, Widgets are considered to occupy "panes" ordered 
