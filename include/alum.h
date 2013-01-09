@@ -46,6 +46,29 @@ Con: Uses a bit of space for the function pointers. Need a switch to
 dynamically look up the correct function pointer for an event.
 
 5) Idea: Composition. How to do this? 
+
+6) Idea: big senders. Like 1, but maintain a single search structure for 
+the UI sender, probably under the form of a lookup tree. This tree stores   
+triples of message ID, component and function pointer, and must be set up
+so the same component can be stored many times in that single tree.
+Pro: Actually simpler conceptually since there is a single point of 
+registration. 
+Con: Complex search structure, probably needs dynamic memory allocation.
+
+Even more generally, when I reflect on event-based programming, the problem is 
+to look up what action(s) to undertake depending on the incoming event 
+and the states of all the components. In essence, a GUI is a state
+machine, however, one where the state is stored in many different components,
+and where possible states can be added as a result of incoming input. 
+
+Deciding how to look up the action to take is deciding what "search
+structure" to use to find the function or function pointer that will perform
+the correct action. 
+
+Since it's not clear which approach has the advantage, I will start out with
+the classic bubbling style, with virtual tables, but think of ways to write it
+in a style that is as user-friendly as is possible.
+
 */
 
 
@@ -236,11 +259,6 @@ struct AlumSender_ {
   BadList * chain;
 };
 
-/* Widget messenger table. */
-struct AlumActions_ {
-  AlumReact * reactions[ALUM_MESSAGE_MAX];
-};
-
 
 /* Messages that Alum may send to the widgets.  */
 struct AlumBasicMessage_ { 
@@ -288,6 +306,24 @@ struct AlumTimerMessage_ {
   struct AlumBasicMessage_ basic;
   int64_t count;
   double error;
+};
+
+typedef 
+int AlumBasicAction(Alum * ui, AlumWidget * w, AlumBasicMessage * m);
+typedef 
+int AlumJoystickAction(Alum * ui, AlumWidget *, AlumJoystickMessage *m);
+typedef 
+int AlumKeyboardAction(Alum * ui, AlumWidget *, AlumKeyboardMessage *m);
+typedef 
+int AlumMouseAction(Alum * ui, AlumWidget *, AlumMouseMessage *m);
+typedef 
+int AlumTimerAction(Alum * ui, AlumWidget *, AlumTimerMessage *m);
+
+
+
+/* Widget messenger table. */
+struct AlumActions_ {
+  AlumReact * reactions[ALUM_MESSAGE_MAX];
 };
 
 
