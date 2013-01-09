@@ -104,7 +104,10 @@ typedef enum   AlumMessageType_        AlumMessageType;
 typedef enum   AlumReply_              AlumReply;
 
 typedef struct AlumBasicMessage_       AlumBasicMessage;
-typedef struct AlumDisplayMessage_     AlumDisplayMessage;
+/* typedef struct AlumDisplayMessage_     AlumDisplayMessage; */
+typedef ALLEGRO_DISPLAY_EVENT AlumDisplayMessage;
+typedef ALLEGRO_KEYBOARD_EVENT AlumDisplayMessage;
+
 typedef struct AlumJoystickMessage_    AlumJoystickMessage;
 typedef struct AlumKeyboardMessage_    AlumKeyboardMessage;
 typedef struct AlumMouseMessage_       AlumMouseMessage;
@@ -309,21 +312,60 @@ struct AlumTimerMessage_ {
 };
 
 typedef 
-int AlumBasicAction(Alum * ui, AlumWidget * w, AlumBasicMessage * m);
+AlumWidget * AlumAllocAction (Alum * ui, AlumActions * acts);
 typedef 
-int AlumJoystickAction(Alum * ui, AlumWidget *, AlumJoystickMessage *m);
+AlumWidget * AlumFreeAction  (Alum * ui, AlumWidget * w);
 typedef 
-int AlumKeyboardAction(Alum * ui, AlumWidget *, AlumKeyboardMessage *m);
+AlumWidget * AlumInitAction  (Alum * ui, AlumWidget * w, void * m);
 typedef 
-int AlumMouseAction(Alum * ui, AlumWidget *, AlumMouseMessage *m);
+AlumWidget * AlumDoneAction  (Alum * ui, AlumWidget * w);
 typedef 
-int AlumTimerAction(Alum * ui, AlumWidget *, AlumTimerMessage *m);
+int AlumBasicAction          (Alum * ui, AlumWidget * w, AlumBasicMessage * m);
+typedef 
+int AlumJoystickAction       (Alum * ui, AlumWidget *, AlumJoystickMessage *m);
+typedef 
+int AlumKeyboardAction       (Alum * ui, AlumWidget *, AlumKeyboardMessage *m);
+typedef 
+int AlumMouseAction          (Alum * ui, AlumWidget *, AlumMouseMessage *m);
+typedef 
+int AlumTimerAction          (Alum * ui, AlumWidget *, AlumTimerMessage *m);
+typedef 
+int AlumDisplayAction        (Alum * ui, AlumWidget *, AlumDisplayMessage *m);
 
 
 
-/* Widget messenger table. */
+/* Widget action table, chock full of actions to undertake on certain events.
+ * * Any of these ponters may be NULL if the action is unavailable.
+ */
 struct AlumActions_ {
-  AlumReact * reactions[ALUM_MESSAGE_MAX];
+  AlumAllocAction       * alloc;
+  AlumFreeAction        * free;
+  AlumInitAction        * init;
+  AlumDoneAction        * done;
+  AlumBasicAction       * draw;
+  AlumJoystickAction    * joystick_axis;
+  AlumJoystickAction    * joystick_button_down;
+  AlumJoystickAction    * joystick_button_up;
+  AlumJoystickAction    * joystick_configuration;
+  AlumKeyboardAction    * keyboard_key_down;
+  AlumKeyboardAction    * keyboard_key_char;
+  AlumKeyboardAction    * keyboard_key_up;
+  AlumMouseAction       * mouse_axes;
+  AlumMouseAction       * mouse_button_down;
+  AlumMouseAction       * mouse_button_up;
+  AlumMouseAction       * mouse_enter_display;
+  AlumMouseAction       * mouse_leave_display;
+  AlumMouseAction       * mouse_warped;
+  AlumTimerAction       * timer;
+  AlumDisplayAction     * display_expose;
+  AlumDisplayAction     * display_resize;
+  AlumDisplayAction     * display_close;
+  AlumDisplayAction     * display_lost;
+  AlumDisplayAction     * display_found;
+  AlumDisplayAction     * display_switch_in;
+  AlumDisplayAction     * display_switch_out;
+  AlumDisplayAction     * display_orientation;
+  AlumBasicAction       * other;
 };
 
 

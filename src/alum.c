@@ -45,6 +45,16 @@ AlumStringWidth * get_width, int * start, int * stop) {
 #endif
 
 
+AlumActions * alumactions_initempty(AlumActions * self) {
+  AlumActions empty = { 0 };
+  if(!self) return NULL;
+  (*self)           = empty;
+  return self;
+}
+
+
+
+
 /** Allegro event handler prototypes for the Alum UI Manager. */
    
 int alum_handle_joystick_axis
@@ -225,8 +235,68 @@ int alum_handle_display_orientation
   return ALUM_REPLY_IGNORE;
 }
 
+#define DO_REACT(SELF, EVENT, MEMBER, HANDLER)                     \
+  do {                                                             \
+    if(!(SELF->acts->HANDLER)) return ALUM_REPLY_IGNORE;         \
+    return SELF->acts->HANDLER(ui, SELF, &((EVENT)->MEMBER));    \
+  } while(0)
+
+/* React to an Allegro event. */
+int 
+alumwidget_handle_allegro_event(Alum * ui, AlumWidget * self, ALLEGRO_EVENT * event) 
+{
+  switch(event->type) {
+    case ALLEGRO_EVENT_JOYSTICK_AXIS:
+      DO_REACT(self, event, joystick, joystick_axis);
+    case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
+      DO_REACT(self, event, joystick, joystick_button_down);
+    case ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
+      DO_REACT(self, event, joystick, joystick_button_up);
+    case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
+      DO_REACT(self, event, joystick, joystick_configuration);
+    case ALLEGRO_EVENT_KEY_DOWN:
+      DO_REACT(self, event, keyboard, keyboard_key_down);
+    case ALLEGRO_EVENT_KEY_CHAR:
+      DO_REACT(self, event, keyboard, keyboard_key_char);
+    case ALLEGRO_EVENT_KEY_UP:
+      DO_REACT(self, event, keyboard, keyboard_key_up);   
+    case ALLEGRO_EVENT_MOUSE_AXES:
+      DO_REACT(self, event, mouse, mouse_axes);
+    case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+      DO_REACT(self, event, mouse, mouse_button_down);
+    case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+      DO_REACT(self, event, mouse, mouse_button_up);
+    case ALLEGRO_EVENT_MOUSE_ENTER_DISPLAY:
+      DO_REACT(self, event, mouse, mouse_enter_display);
+    case ALLEGRO_EVENT_MOUSE_LEAVE_DISPLAY:
+      DO_REACT(self, event, mouse, mouse_leave_display);
+    case ALLEGRO_EVENT_MOUSE_WARPED:
+      DO_REACT(self, event, mouse, mouse_warped);
+    case ALLEGRO_EVENT_TIMER:
+      DO_REACT(self, event, timer, timer);
+    case ALLEGRO_EVENT_DISPLAY_EXPOSE:
+      DO_REACT(self, event, display, display_expose);
+    case ALLEGRO_EVENT_DISPLAY_RESIZE:
+      DO_REACT(self, event, display, display_resize);
+    case ALLEGRO_EVENT_DISPLAY_CLOSE:
+      DO_REACT(self, event, display, display_close);
+    case ALLEGRO_EVENT_DISPLAY_LOST:
+      DO_REACT(self, event, display, display_lost);
+    case ALLEGRO_EVENT_DISPLAY_FOUND:
+      DO_REACT(self, event, display, display_found);
+    case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+      DO_REACT(self, event, display, display_switch_in);
+    case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+      DO_REACT(self, event, display, display_switch_out);
+    case ALLEGRO_EVENT_DISPLAY_ORIENTATION:
+      DO_REACT(self, event, display, display_orientation);
+    default:
+      return ALUM_REPLY_IGNORE;
+  }
+}
 
 
+#undef DO_REACT
 #define DO_REACT(SELF, EVENT, MEMBER, HANDLER)              \
   do {                                                      \
     return alum_handle_##HANDLER(SELF, &((EVENT)->MEMBER)); \

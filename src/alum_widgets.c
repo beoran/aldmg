@@ -30,6 +30,7 @@ int alumlabel_draw(void * from, void * to, int message, void * data) {
   AlumFrame  * frame  = bad_container(widget, AlumFrame, widget);
   AlumLabel  * label  = bad_container(frame , AlumLabel, frame);
   alumframe_draw(label, widget, ALUM_MESSAGE_DRAW, data);
+  return ALUM_REPLY_OK;
 }
 
 

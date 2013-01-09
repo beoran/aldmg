@@ -153,6 +153,7 @@ alumsender_link(AlumSender * self, AlumListener * listener,
   return alumsender_register(self, listener);
 }
 
+#ifdef COMMENT_
 
 int 
 alumactions_register(AlumActions * self, int message, AlumReact * reaction) {
@@ -177,9 +178,12 @@ alumactions_act(AlumActions * self, void * from, void * to,
   return self->reactions[message](from, to, message, data);
 }
 
+#endif // COMMENT_
+
 
 int alumwidget_act(AlumWidget * self, void * from, int message, void * data) {
-  return alumactions_act(self->acts, from, self, message, data);   
+  // return alumactions_act(self->acts, from, self, message, data);   
+  return ALUM_REPLY_ERROR;
 } 
 
 
