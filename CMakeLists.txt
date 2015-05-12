@@ -38,7 +38,7 @@ add_library(ALDMG_OBJECTS OBJECT ${ALDMG_SRC_FILES})
 add_library(aldmg_static ${ALDMG_SRC_FILES})
 add_library(aldmg SHARED ${ALDMG_SRC_FILES})
 # Test exectable
-add_executable(test_aldmg $<TARGET_OBJECTS:ALDMG_OBJECTS> src/main.c)
+add_executable(test_aldmg $<TARGET_OBJECTS:ALDMG_OBJECTS> test/test_aldmg.c)
 target_link_libraries(test_aldmg ${ALDMG_LIBS})
 
 set(ALDMG_REFMAN_INDEX  ${CMAKE_CURRENT_SOURCE_DIR}/doc/refman/index.html)
