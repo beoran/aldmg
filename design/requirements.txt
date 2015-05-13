@@ -1,0 +1,74 @@
+Topic   : ALDMG
+
+-------------
+
+Topic   : Introduction
+Parent  : ALDMG
+Text    : ALDMG is an Allegro Library for Direct Mode Guis in C. 
+
+-------------
+
+Topic   : State
+Parent  : ALDMG
+Text    : 
+  
+  An important benefit of ALDMG it that it does not does 
+  require the user of the library to keep track of the state of the individual 
+  widgets. Only a global GUI state needs to be created and destroyed. 
+  
+  Furthermore, the communication between the GUI and the program that uses
+  the program happens though widget functions, and not through callbacks. 
+  
+  Only in the case of custom widgets, calbacks are used for the operation of the 
+  widget, but the communication between widget and GUI still happens though 
+  a widget function. 
+
+
+------------
+
+Topic   : Widgets
+Parent  : ALDMG
+Text    : 
+  
+  ALDMG supports many widgets, with the onus on widgets that are actually useful
+  for the GUI of a game, as opposed to generic widgets.
+  
+------------
+
+Requirement : GUI Library
+ID          : REQ_1
+Topic       : ALDMG
+Status      : TODO
+Description : 
+  
+  ALDMG is a programming library. ALDMG implements Graphical User Interface 
+  functionality. 
+  
+-----------
+
+Requirement : C Library
+ID          : REQ_1.1
+Parent      : GUI Library
+Status      : TODO
+Description : ALDMG is implemented in plain C. The C89 standard is followed.
+Rationale   : This makes ALDMG easier to use from other (scripting) languages.
+
+-----------
+
+Requirement : Allegro 5.1
+ID          : REQ_1.2
+Parent      : GUI Library
+Status      : TODO
+Description : ALDMG requires Allegro 5.1 or better.
+Rationale   : 
+  
+  ALDMG is specifically intended for use in multimedia applications. 
+  Allegro is a great cross-platform multimedia library. 
+  Hence, ALDMG will use Allegro for all graphical operations.
+  Allegro 5.1 uor better is required because it has support for better polygon
+  and text drawing. 
+
+-----------
+
+Requirement : 
+
