@@ -65,10 +65,32 @@ Rationale   :
   ALDMG is specifically intended for use in multimedia applications. 
   Allegro is a great cross-platform multimedia library. 
   Hence, ALDMG will use Allegro for all graphical operations.
-  Allegro 5.1 uor better is required because it has support for better polygon
+  Allegro 5.1 or better is required because it has support for better polygon
   and text drawing. 
 
 -----------
 
-Requirement : 
+Requirement : State Management
+ID          : REQ_2
+Topic       : State
+Description : 
+  
+  ALDMG manages the state of the widgets internally. The user of the library
+  does not have to keep track of the widgets directly. The user of the library
+  only has to keep track of an instance of the state of the whole GUI.
+  
+Rationale   : 
+  
+  Most GUI libraries require the user to keep track of all widgets. This is 
+  annoying, verbose, and error-prone. ALDMG tries to improve on this by 
+  moving all widgets into a single opaque GUI state.
+
+-----------
+
+Requirement : Communication with user program
+ID          : REQ_3
+Topic       : State
+Description : 
+  
+  ALDMG
 
